@@ -1,0 +1,13 @@
+git+https://github.com/huggingface/transformers@2bf95e2  # Necessary to install from source
+aiohttp
+pandas
+nltk
+datasets >= 1.8.0
+nltk
+torch
+rouge-score
+wandb
+sentencepiece  # Necessary for pegasus, see https://github.com/huggingface/transformers/issues/8963
+JSON-minify  # Necessary to write comments in json files
+spacy
+evaluate

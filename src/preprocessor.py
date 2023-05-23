@@ -11,7 +11,7 @@ class Preprocessor:
     Preprocess inputs and outputs
     """
 
-    def __init__(self, prefix, special_tokens_constants, should_add_highlights: bool = True, only_sents_with_highlights: bool = False, keep_only_highlights: bool = False, add_planning_on_concatenation: bool = False, add_highlight_delim_planning: bool = False, add_highlight_labels_to_planning: bool = False):
+    def __init__(self, prefix, special_tokens_constants, should_add_highlights: bool = True, only_sents_with_highlights: bool = False, keep_only_highlights: bool = False, add_planning_on_concatenation: bool = False, add_highlight_delim_planning: bool = False, add_highlight_labels_to_planning: bool = False, add_CoT_to_output: bool = False):
         self.prefix = prefix
         self.special_tokens_constants = special_tokens_constants
         self.should_add_highlights = should_add_highlights
@@ -20,6 +20,7 @@ class Preprocessor:
         self.add_planning_on_concatenation = add_planning_on_concatenation
         self.add_highlight_delim_planning = add_highlight_delim_planning
         self.add_highlight_labels_to_planning = add_highlight_labels_to_planning
+        self.add_CoT_to_output = add_CoT_to_output
 
     def preprocess_input(self, source_text, highlighted_spans) -> str:
         """
@@ -90,6 +91,11 @@ class Preprocessor:
                 all_highlights = [self.special_tokens_constants['highlight_start'] + h + self.special_tokens_constants['highlight_end'] for h in all_highlights]
             highlights_concat = self.special_tokens_constants["highlight_delim"].join(all_highlights) if self.add_highlight_delim_planning else " ".join(all_highlights)
             gold_output = self.special_tokens_constants['is_concat'] + highlights_concat + self.special_tokens_constants['is_summary'] + summary_text
+        elif not self.add_CoT_to_output is None:
+            if self.add_CoT_to_output == "highlights":
+                all_highlights = re.findall(f"(?<={self.special_tokens_constants['highlight_start']})([\s\S]*?)(?={self.special_tokens_constants['highlight_end']})", curr_input)
+                highlights_concat = "\n ".join([f"{i+1}. {h}" for i,h in enumerate(all_highlights)])
+                gold_output = f"The highlighted spans are: \n{highlights_concat}\nSo, the answer is:\n {summary_text}"        
         else:
             gold_output = summary_text
         return gold_output

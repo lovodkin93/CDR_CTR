@@ -1,11 +1,11 @@
 {
     // Model config
     "experiment_type": "seq2seq",
-    "model_name_or_path": "bigscience/T0_3B",
+    "model_name_or_path": "google/flan-t5-xxl",
     "source_prefix": "Instruction: In this task, you are presented with a passage, where some parts are \"highlighted\" (namely, there are <extra_id_1> and <extra_id_2> tokens before and after each such span). \nYour job is to generate a summary that covers all and only the \"highlighted\" spans. \nPassage: ",
     "max_source_length": 1000,
     "max_target_length": 200,
-    "output_dir": "models/T0_3B/no_CoT_no_icl_start_with_instruction_word_max_source_length_1400",
+    "output_dir": "models/flan-t5-xxl/no_CoT_no_icl_start_with_instruction_word_max_source_length_1400",
     // "gradient_checkpointing": true, // Slower but allows more memory to be allocated, recommended by official page
     // "gradient_accumulation_steps":4,
     "min_length": 100,
@@ -48,5 +48,5 @@
     "num_train_epochs": 10.0,
     // Wandb
     "report_to": "wandb",
-    "run_name": "To-3B/no_CoT_no_icl_start_with_instruction_word_max_source_length_1400"
+    "run_name": "flan-t5-xxl/no_CoT_no_icl_start_with_instruction_word_max_source_length_1400"
     }

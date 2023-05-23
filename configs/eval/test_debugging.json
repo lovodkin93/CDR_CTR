@@ -1,7 +1,7 @@
 {
     // Model config
     "experiment_type": "seq2seq",      
-    "model_name_or_path": "/home/nlp/sloboda1/controlled_reduction/instruction_finetuning/models/T0/T0_no_CoT_no_icl/checkpoint-300",
+    "model_name_or_path": "/home/nlp/sloboda1/controlled_reduction/CTR_instruction_finetuning/models/T0/T0_no_CoT_no_icl/checkpoint-300",
     "source_prefix": "In this task, you are presented with a passage, where some parts are \"highlighted\" (namely, there are <highlight_start> and <highlight_end> tokens before and after each such span). \nYour job is to generate a summary that covers all and only the \"highlighted\" spans. \nPassage: ",
     "output_dir": "models/predict/test/short_dev__highlights_for_debugging",
     "max_source_length": 1024,

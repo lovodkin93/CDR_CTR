@@ -2,6 +2,7 @@ import numpy as np
 
 from src.utils import filter_function_words
 
+
 def compute_rouge_metrics(predictions: list, references: list, metric, prefix: str, should_filter_function_words: bool = False) -> dict:
     assert len(predictions) == len(references)
 
@@ -32,4 +33,10 @@ def compute_summac_metrics(inputs, predictions, model) -> dict:
     result = model.score(inputs, predictions)
     return {
         "summac": np.mean(result['scores'])
+    }
+
+def compute_meteor_metrics(predictions: list, references: list, metric, prefix: str) -> dict:
+    result = metric.compute(predictions=predictions, references=references)
+    return {
+        f"{prefix}meteor": round(result['meteor']*100, 4)
     }

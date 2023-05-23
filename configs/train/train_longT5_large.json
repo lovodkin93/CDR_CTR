@@ -1,13 +1,18 @@
 {
 // Model config
 "experiment_type": "seq2seq",
-"model_name_or_path": "google/flan-t5-large",
-"source_prefix": "In this task, you are presented with a passage, where some parts are \"highlighted\" (namely, there are <extra_id_1> and <extra_id_2> tokens before and after each such span). \nYour job is to generate a summary that covers all and only the \"highlighted\" spans. \nPassage: ",
+"model_name_or_path": "google/long-t5-tglobal-large",
+"source_prefix": "",
 "max_source_length": 1400,
 "max_target_length": 200,
-"output_dir": "models/flan-t5-large/flan_t5_large_no_CoT_no_icl_max_source_length_1400",
+"output_dir": "models/long-t5-tglobal-large/long-t5-tglobal-large_max_source_length_1400",
+// "add_global_attention": true,
+// "add_global_attention_on_highlights": true,
 // "gradient_checkpointing": true, // Slower but allows more memory to be allocated, recommended by official page
 // "gradient_accumulation_steps":4,
+// Long T5
+"local_radius": 127, // radius of local attention (defualt - 127)
+"global_block_size": 16, // size of token blocks to be averaged in order to generate the global attention (default - 16)
 "min_length": 100,
 "length_penalty": 2.0,
 "early_stopping": true,
@@ -46,5 +51,5 @@
 "num_train_epochs": 10.0,
 // Wandb
 "report_to": "wandb",
-"run_name": "flan-t5-large/no_CoT_no_icl_max_source_length_1400"
+"run_name": "long-t5-tglobal-large/long-t5-tglobal-large_max_source_length_1400"
 }

@@ -39,7 +39,7 @@ from transformers import (
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, is_offline_mode
 from transformers.utils.versions import require_version
-from src.compute_metrics import compute_rouge_metrics, compute_summac_metrics
+from src.compute_metrics import compute_rouge_metrics, compute_summac_metrics, compute_meteor_metrics
 from src.concatenate_highlights import concatenate_highlights
 from src.freeze_embeds import freeze_embeds
 from src.predictions_analyzer import PredictionsAnalyzer
@@ -372,8 +372,11 @@ class DataTrainingArguments:
     )
 
         # NEW from original script
-    add_CoT_to_output: bool = field(
-        default=False
+    add_CoT_to_output: str = field(
+        default=None,
+        metadata={
+            "help": "whether to add CoT to output. options: None (no CoT), \"highlights\" for highlights enumeration CoT, \"Highlights+Alignment\"  for highlights enumeration+alignment CoT, \"mix-highlights\", \"mix-alignments\", \"mix-all\" for mix of no Cot with highlights/highlights+alignments/all three versions, repectively."
+        }
     )
 
         # NEW from original script
@@ -468,7 +471,6 @@ def main():
                 "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
             )
 
-    
     # Set seed before initializing model.
     set_seed(training_args.seed)
 
@@ -598,7 +600,7 @@ def main():
 
     # NEW from original script
     special_tokens_constants = get_special_tokens_constants(is_t5_model)
-    preprocessor = Preprocessor(prefix, special_tokens_constants, data_args.should_preprocess_add_highlights, data_args.should_preprocess_only_sents_with_highlights, data_args.should_preprocess_keep_only_highlights, data_args.add_planning_on_concatenation, data_args.add_highlight_delim_planning, data_args.add_highlight_labels_to_planning)
+    preprocessor = Preprocessor(prefix, special_tokens_constants, data_args.should_preprocess_add_highlights, data_args.should_preprocess_only_sents_with_highlights, data_args.should_preprocess_keep_only_highlights, data_args.add_planning_on_concatenation, data_args.add_highlight_delim_planning, data_args.add_highlight_labels_to_planning, data_args.add_CoT_to_output)
 
     # NEW from original script
     tokenizer.add_special_tokens({'additional_special_tokens': list(special_tokens_constants.values())})
@@ -842,6 +844,8 @@ def main():
     summac_model = None
     if data_args.eval_with_summac:
         summac_model = get_summac_model()
+    meteor_metric = evaluate.load('meteor')
+
 
     def postprocess_text(preds, labels, is_add_planning_on_concatenation, preprocessor, tokenizer):
         all_special_tkns = sum([special_tkns if type(special_tkns)==list else [special_tkns] for special_tkns in tokenizer.special_tokens_map.values()], [])
@@ -885,13 +889,33 @@ def main():
             decoded_preds, decoded_labels, is_add_planning_on_concatenation, preprocessor, tokenizer)
 
         # NEW from original script
-        result = compute_rouge_metrics(decoded_preds, decoded_labels, metric, prefix="gold")
-        result.update(compute_rouge_metrics(decoded_preds, decoded_labels, metric, prefix="gold_content_", should_filter_function_words=True))
+        if data_args.add_CoT_to_output is None: 
+            result = compute_rouge_metrics(decoded_preds, decoded_labels, metric, prefix="gold")
+            result.update(compute_rouge_metrics(decoded_preds, decoded_labels, metric, prefix="gold_content_", should_filter_function_words=True))
+            result.update(compute_meteor_metrics(decoded_preds, decoded_labels, meteor_metric, prefix="gold_"))
+
+        else:
+            result = compute_rouge_metrics(decoded_preds, decoded_labels, metric, prefix="full_gold")
+            result.update(compute_rouge_metrics(decoded_preds, decoded_labels, metric, prefix="full_gold_content_", should_filter_function_words=True))
+            result.update(compute_meteor_metrics(decoded_preds, decoded_labels, meteor_metric, prefix="full_gold_"))
+
+            if data_args.add_CoT_to_output == "highlights":
+                decoded_labels_actual_summary = [label[label.index("So, the answer is:"):].replace("So, the answer is:", "").strip() for label in decoded_labels]
+                decoded_preds_actual_summary = [pred[pred.index("So, the answer is:"):].replace("So, the answer is:", "").strip() if "So, the answer is:" in pred else pred for pred in decoded_preds]
+                result.update(compute_rouge_metrics(decoded_preds_actual_summary, decoded_labels_actual_summary, metric, prefix="gold"))
+                result.update(compute_rouge_metrics(decoded_preds_actual_summary, decoded_labels_actual_summary, metric, prefix="gold_content_", should_filter_function_words=True))
+                result.update(compute_meteor_metrics(decoded_preds_actual_summary, decoded_labels_actual_summary, meteor_metric, prefix="gold_"))
+
+
         if not is_training:
             df = pd.DataFrame(predict_dataset.to_dict())
+            if not data_args.add_CoT_to_output is None:
+                raise Exception("AVIVSL: need to add support for the \"add_CoT_to_output\", by removing from the output the instructions, so they are no incorporated into the concatenated highlights.")
             highlights = concatenate_highlights(df)
             result.update(compute_rouge_metrics(decoded_preds, highlights, metric, prefix="highlights"))
             result.update(compute_rouge_metrics(decoded_preds, highlights, metric, prefix="highlights_content", should_filter_function_words=True))
+            result.update(compute_meteor_metrics(decoded_preds, highlights, meteor_metric, prefix="highlights_"))
+
 
         # Calculate SummaC (disabled: takes too long, better to only do it once in the predictions analysis)
         # if data_args.eval_with_summac:
@@ -925,7 +949,7 @@ def main():
 
 
     # NEW from original script (if received config file, save it with the model)
-    if (len(sys.argv) == 3 or len(sys.argv) == 2) and sys.argv[-1].endswith(".json"):
+    if (len(sys.argv) == 3 or len(sys.argv) == 2) and sys.argv[-1].endswith(".json") and (training_args.do_predict or torch.distributed.get_rank()==0):
         config_file_path = sys.argv[-1]
         with open(config_file_path, "r") as f:
             config_file = json.loads(f.read())

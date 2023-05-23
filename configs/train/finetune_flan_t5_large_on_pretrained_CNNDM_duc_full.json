@@ -1,11 +1,12 @@
 {
 // Model config
 "experiment_type": "seq2seq",
-"model_name_or_path": "google/flan-t5-large",
+"model_name_or_path": "models/flan-t5-large/pretrain_cnndm_duc_no_CoT_no_icl_start_with_instruction_word_max_src_len_1400/checkpoint-87700",
 "source_prefix": "In this task, you are presented with a passage, where some parts are \"highlighted\" (namely, there are <extra_id_1> and <extra_id_2> tokens before and after each such span). \nYour job is to generate a summary that covers all and only the \"highlighted\" spans. \nPassage: ",
 "max_source_length": 1400,
 "max_target_length": 200,
-"output_dir": "models/flan-t5-large/flan_t5_large_no_CoT_no_icl_max_source_length_1400",
+"output_dir": "models/flan-t5-large/finetune_flan_t5_large_on_pretrain_cnndm_duc",
+"resume_from_checkpoint": true, // Useful if training crashed
 // "gradient_checkpointing": true, // Slower but allows more memory to be allocated, recommended by official page
 // "gradient_accumulation_steps":4,
 "min_length": 100,
@@ -32,6 +33,9 @@
 // "lora_training": true,
 "max_grad_norm": 1.0,
 "sharded_ddp": "zero_dp_3 auto_wrap", // to accomodate the model across the GPUs (by sharding it and saving different layers of it in different GPUs)
+// "fsdp_transformer_layer_cls_to_wrap": "T5Block", // if choosing non-T5 block, change to other model.
+// "fsdp": "full_shard auto_wrap",
+// "eval_accumulation_steps": 1,
 // "learning_rate": 1e-9,
 // "add_CoT_to_output": "True",
 // "add_icl_to_input": "True",
@@ -39,12 +43,13 @@
 "do_eval": true,
 "per_device_eval_batch_size": 2,  // Can be larger than training batch size (no grad is activated)
 "validation_file": "data/dev__highlights.csv",
+// "fp16_full_eval": true,
 "evaluation_strategy": "steps",
-"save_steps": 50,
-"eval_steps": 50,
-"logging_steps": 50,
-"num_train_epochs": 10.0,
+"save_steps": 100,
+"eval_steps": 100,
+"logging_steps": 100,
+"num_train_epochs": 20.0,
 // Wandb
 "report_to": "wandb",
-"run_name": "flan-t5-large/no_CoT_no_icl_max_source_length_1400"
+"run_name": "flan-t5-large/finetune_flan_t5_large_on_pretrain_cnndm_duc"
 }

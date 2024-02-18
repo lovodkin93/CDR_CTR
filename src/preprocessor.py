@@ -22,7 +22,7 @@ class Preprocessor:
         self.add_highlight_labels_to_planning = add_highlight_labels_to_planning
         self.add_CoT_to_output = add_CoT_to_output
 
-    def preprocess_input(self, source_text, highlighted_spans) -> str:
+    def preprocess_input(self, source_text, highlighted_spans, instruction) -> str:
         """
         Converts input to str
         """
@@ -78,7 +78,10 @@ class Preprocessor:
             final_text = source_text_with_highlighted_spans
             
         # Return text with prefix
-        return f"{self.prefix} {final_text}"
+        if instruction != None:
+            return f"{instruction} {final_text}"
+        else:
+            return f"{self.prefix} {final_text}"
 
 
     def preprocess_output(self, summary_text, curr_input) -> str:

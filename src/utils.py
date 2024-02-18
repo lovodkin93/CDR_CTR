@@ -47,12 +47,6 @@ def prepare_config_for_hf() -> dict:
 
     return config
 
-def get_summac_model():
-    sys.path.append('summac')  # Will fail if you didn't load the submodule (https://git-scm.com/book/en/v2/Git-Tools-Submodules)
-    from summac.model_summac import SummaCZS
-    model = SummaCZS(granularity="sentence", model_name="vitc", use_con=False)
-    return model
-
 import spacy
 nlp = spacy.load("en_core_web_sm")
 

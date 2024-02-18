@@ -13,12 +13,11 @@ class PredictionsAnalyzer:
     Extracts an analyzed result for each prediction instead of an aggregate of all predictions
     """
 
-    def __init__(self, tokenizer, preprocessor, is_add_planning_on_concatenation, output_dir: str, summac_model, rouge_metric) -> None:
+    def __init__(self, tokenizer, preprocessor, is_add_planning_on_concatenation, output_dir: str, rouge_metric) -> None:
         self.tokenizer = tokenizer
         self.preprocessor = preprocessor
         self.is_add_planning_on_concatenation = is_add_planning_on_concatenation
         self.output_dir = output_dir
-        self.summac_model = summac_model
         self.rouge_metric = rouge_metric
 
     def write_predictions_to_file(self, predictions, dataset, df, is_tokenized=True):
@@ -31,65 +30,13 @@ class PredictionsAnalyzer:
         # Calculate rouge between input and summary
         highlights_input = concatenate_highlights(df)
         self.calculate_rouge_between_gold_n_prediction(objects, objects['predicted'], highlights_input, prefix="highlights")
-
-        if self.summac_model is not None:
-            # Calculate if summaries are entail the input
-            self.calculate_summac_between_input_n_summaries(objects, objects['clean_input'], objects['predicted'], prefix="input")
-
-            # # Calculate if input entails the summaries
-            # self.calculate_summac_between_input_n_summaries(objects, objects['predicted'], objects['clean_input'], prefix="input_reversed")
-
-            # Calculate if summaries entail the highlights
-            self.calculate_summac_between_input_n_summaries(objects, highlights_input, objects['predicted'], prefix="highlights")
-
-            # # Calculate if highlights entails the highlights
-            # self.calculate_summac_between_input_n_summaries(objects, objects['predicted'], highlights_input, prefix="highlights_reversed")
-
         self._save_to_file(objects)
 
     def calculate_rouge_between_gold_n_prediction(self, objects, decoded_predictions, gold, prefix: str):
         result_per_pred = self.rouge_metric.compute(predictions=decoded_predictions, references=gold, use_stemmer=True, use_aggregator=False)
         objects[f'{prefix}_rouge1'] = [x for x in result_per_pred['rouge1']]
-        # objects[f'{prefix}_rouge1_precision'] = [x.precision for x in result_per_pred['rouge1']]
-        # objects[f'{prefix}_rouge1_recall'] = [x.recall for x in result_per_pred['rouge1']]
         objects[f'{prefix}_rouge2'] = [x for x in result_per_pred['rouge2']]
-        # objects[f'{prefix}_rouge2_precision'] = [x.precision for x in result_per_pred['rouge2']]
-        # objects[f'{prefix}_rouge2_recall'] = [x.recall for x in result_per_pred['rouge2']]
         objects[f'{prefix}_rougeL'] = [x for x in result_per_pred['rougeL']]
-
-    def calculate_summac_between_input_n_summaries(self, objects, inputs, summaries, prefix: str):
-        """
-        Calculates SummaC score, but also saves for each summary sentence the max entailing and max contradicting sentence
-        """
-
-        model = self.summac_model
-        if model is not None:
-            result = model.score(inputs, summaries)
-
-            # Find for each example the max entailing and max contradicting sentence
-            per_example_per_sentence_highest_source_score = []
-            for example_idx, image in enumerate(result['images']):
-                split_input = model.imager.split_text(inputs[example_idx])
-                split_summary = model.imager.split_text(summaries[example_idx])
-                per_sentence_highest_source_score = []
-                # Image shape: 3 x num_source_sents x num_summary_sents
-                for summary_sentence_idx in range(0, image.shape[2]):
-                    summary_sentence = split_summary[summary_sentence_idx]
-                    max_ent_score, max_ent_idx, max_con_score, max_con_idx, final_score = self._summc_from_image_to_scores(model, image[:,:,summary_sentence_idx])
-
-                    per_sentence_highest_source_score.append({
-                        "hypothesis": summary_sentence,
-                        "score": final_score,
-                        "max_ent_score": max_ent_score,
-                        "max_ent_premise": split_input[max_ent_idx],
-                        "max_con_score": max_con_score,
-                        "max_con_premise": split_input[max_con_idx],
-                    })
-
-                per_example_per_sentence_highest_source_score.append(json.dumps(per_sentence_highest_source_score))
-
-            objects[f'{prefix}_summac_per_example_per_sentence_highest_source_score'] = per_example_per_sentence_highest_source_score
-            objects[f'{prefix}_summac_scores'] = result['scores']
 
     def _clean_predictions(self, predictions, dataset, is_tokenized):
         
@@ -160,27 +107,3 @@ class PredictionsAnalyzer:
         output_prediction_file = os.path.join(
             self.output_dir, "generated_predictions.csv")
         df.to_csv(output_prediction_file, index=False)
-
-
-    def _summc_from_image_to_scores(self, model, image):
-        """
-        Copy pasted from summac with modifications to run over a single summary sentence
-        """
-
-        ent_scores = image[0]  # Shape: num_input_sentences
-        con_scores = image[1]  # Shape: num_input_sentences
-
-        max_ent_idx = np.argmax(ent_scores, axis=0)
-        max_ent_score = np.max(ent_scores, axis=0)
-        max_con_idx = np.argmax(con_scores, axis=0)
-        max_con_score = np.max(con_scores, axis=0)
-
-
-        if model.use_ent and model.use_con:
-            final_score = max_ent_score - max_con_score
-        elif model.use_ent:
-            final_score = max_ent_score
-        elif model.use_con:
-            final_score = 1.0 - max_con_score
-
-        return max_ent_score, max_ent_idx, max_con_score, max_con_idx, final_score

@@ -39,13 +39,12 @@ from transformers import (
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, is_offline_mode
 from transformers.utils.versions import require_version
-from src.compute_metrics import compute_rouge_metrics, compute_summac_metrics, compute_meteor_metrics
+from src.compute_metrics import compute_rouge_metrics, compute_meteor_metrics, compute_bertscore_metrics
 from src.concatenate_highlights import concatenate_highlights
 from src.freeze_embeds import freeze_embeds
 from src.predictions_analyzer import PredictionsAnalyzer
 
 from src.preprocessor import Preprocessor, get_special_tokens_constants
-from src.utils import get_summac_model
 import evaluate
 from peft import LoraConfig, TaskType, get_peft_model
 import torch
@@ -353,10 +352,12 @@ class DataTrainingArguments:
             "help": "Decides whether to keep only highlights"
         }
     )
+    
     # NEW from original script
-    eval_with_summac: bool = field(
-        default=True
+    eval_with_bertscore: bool = field(
+        default=False
     )
+
 
     # NEW from original script
     add_planning_on_concatenation: bool = field(
@@ -440,6 +441,7 @@ def main():
     )
     log_level = training_args.get_process_log_level()
     logger.setLevel(log_level)
+    logging.basicConfig(level=logging.INFO)
     datasets.utils.logging.set_verbosity(log_level)
     transformers.utils.logging.set_verbosity(log_level)
     transformers.utils.logging.enable_default_handler()
@@ -709,13 +711,16 @@ def main():
                 if examples[text_column][i] is not None and examples[summary_column][i] is not None:
                     inputs.append(examples[text_column][i])
                     targets.append(examples[summary_column][i])
-
-            inputs = [prefix + inp for inp in inputs]            
+            if "instructions" in examples.data.keys():
+                inputs = [examples["instructions"][i] + inp for i,inp in enumerate(inputs)]
+            else:
+                inputs = [prefix + inp for inp in inputs]            
         else:
             inputs, targets = [], []
             for i in range(len(examples[text_column])):
                 # NEW from original script
-                curr_input = preprocessor.preprocess_input(examples['doc_text'][i], examples['highlight_spans'][i])
+                curr_instructions = examples["instructions"][i] if "instructions" in examples.data.keys() else None
+                curr_input = preprocessor.preprocess_input(examples['doc_text'][i], examples['highlight_spans'][i], curr_instructions)
                 inputs.append(curr_input)
                 curr_output = preprocessor.preprocess_output(examples['summary_text'][i], curr_input)
                 targets.append(curr_output)
@@ -841,9 +846,6 @@ def main():
 
     # Metric
     metric = evaluate.load("rouge") # load_metric("rouge") # AVIVSL: updated this
-    summac_model = None
-    if data_args.eval_with_summac:
-        summac_model = get_summac_model()
     meteor_metric = evaluate.load('meteor')
 
 
@@ -916,12 +918,9 @@ def main():
             result.update(compute_rouge_metrics(decoded_preds, highlights, metric, prefix="highlights_content", should_filter_function_words=True))
             result.update(compute_meteor_metrics(decoded_preds, highlights, meteor_metric, prefix="highlights_"))
 
-
-        # Calculate SummaC (disabled: takes too long, better to only do it once in the predictions analysis)
-        # if data_args.eval_with_summac:
-        #     logger.info("Start computing SummaC")
-        #     result.update(compute_summac_metrics(decoded_labels, decoded_preds, summac_model))
-
+            if data_args.eval_with_bertscore:
+                result.update(compute_bertscore_metrics(decoded_preds, decoded_labels, prefix="gold_"))
+                result.update(compute_bertscore_metrics(decoded_preds, highlights, prefix="highlights_"))
         prediction_lens = [np.count_nonzero(
             pred != tokenizer.pad_token_id) for pred in preds]
         result["gen_len"] = np.mean(prediction_lens)
@@ -1041,7 +1040,7 @@ def main():
                 print(result)
 
                 # NEW from original script (per sample prediction)
-                PredictionsAnalyzer(tokenizer, preprocessor, data_args.add_planning_on_concatenation, training_args.output_dir, summac_model, metric).write_predictions_to_file(predict_results.predictions, prep_predict_dataset, pd.DataFrame(predict_dataset.to_dict()))
+                PredictionsAnalyzer(tokenizer, preprocessor, data_args.add_planning_on_concatenation, training_args.output_dir, metric).write_predictions_to_file(predict_results.predictions, prep_predict_dataset, pd.DataFrame(predict_dataset.to_dict()))
 
     kwargs = {"finetuned_from": model_args.model_name_or_path,
               "tasks": "summarization"}

@@ -6,19 +6,12 @@
 "max_source_length": 1400,
 "max_target_length": 512,
 "output_dir": "models/flan-t5-large/pretrain_cnndm_duc",
-// "gradient_checkpointing": true, // Slower but allows more memory to be allocated, recommended by official page
-// "gradient_accumulation_steps":4,
 "min_length": 100,
 "length_penalty": 2.0,
 "early_stopping": true,
 "no_repeat_ngram_size": 3,
-// "load_in_8bit": true,
-// "device_map": "auto",
 "fp16": false, // Recommended by docs
-// "optim":"adafactor", // Lever to play with if getting OOM, was suggested in docs
-// "fp16_backend": "apex",  // Recommended by docs
 // Predict
-// "do_predict",  # Loading predict dataset just loads the memory un-necessairly
 "predict_with_generate": true,  
 "num_beams": 2,  // Lever to play with if getting OOM, was suggested in docs
 // Train              
@@ -29,14 +22,7 @@
 "save_total_limit": 2,  // Save only last one and best one
 "metric_for_best_model": "eval_gold_rougeL",
 "load_best_model_at_end": true,
-// "lora_training": true,
 "max_grad_norm": 1.0,
-// "fsdp_transformer_layer_cls_to_wrap": "T5Block", // if choosing non-T5 block, change to other model.
-// "fsdp": "full_shard auto_wrap",
-"sharded_ddp": "zero_dp_3 auto_wrap", // to accomodate the model across the GPUs (by sharding it and saving different layers of it in different GPUs)
-// "learning_rate": 1e-9,
-// "add_CoT_to_output": "True",
-// "add_icl_to_input": "True",
 // Eval while training
 "do_eval": true,
 "per_device_eval_batch_size": 3,  // Can be larger than training batch size (no grad is activated)

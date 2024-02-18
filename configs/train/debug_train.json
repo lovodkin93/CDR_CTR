@@ -2,7 +2,7 @@
     // Model config
     "experiment_type": "seq2seq",
     "model_name_or_path": "google/flan-t5-small",
-    "source_prefix": "In this task, you are presented with a passage, where some parts are \"highlighted\" (namely, there are <highlight_start> and <highlight_end> tokens before and after each such span). \nYour job is to generate a summary that covers all and only the \"highlighted\" spans. \nPassage: ",
+    "source_prefix": "Instruction: In this task, you are presented with a passage, where some parts are \"highlighted\" (namely, there are <highlight_start> and <highlight_end> tokens before and after each such span). \nYour job is to generate a summary that covers all and only the \"highlighted\" spans. \nPassage: ",
     "max_source_length": 1200,
     "max_target_length": 1000,
     "output_dir": "debug/model_debug",
@@ -25,31 +25,31 @@
     "do_train": true,
     "per_device_train_batch_size": 1,
     "overwrite_output_dir": true,
-    "train_file": "data/train__highlights.csv",
+    "train_file": "data/train_all_instructions_highlights.csv",
     "save_total_limit": 2,  // Save only last one and best one
     "metric_for_best_model": "eval_gold_rougeL",
     "load_best_model_at_end": true,
     // "lora_training": true,
     "max_grad_norm": 1.0,
     // "sharded_ddp": "zero_dp_3 auto_wrap",
-    "fsdp_transformer_layer_cls_to_wrap": "T5Block", // if choosing non-T5 block, change to other model.
-    "fsdp": "full_shard auto_wrap offload",
+    // "fsdp_transformer_layer_cls_to_wrap": "T5Block", // if choosing non-T5 block, change to other model.
+    // "fsdp": "full_shard auto_wrap offload",
     // "fsdp": "full_shard offload auto_wrap",
     // "learning_rate": 1e-9,
-    "add_CoT_to_output": "highlights",
+    // "add_CoT_to_output": "highlights",
     // "add_icl_to_input": true,
     // Eval while training
     "do_eval": true,
-    "per_device_eval_batch_size": 2,  // Can be larger than training batch size (no grad is activated)
-    "validation_file": "data/dev__highlights.csv",
+    "per_device_eval_batch_size": 16,  // Can be larger than training batch size (no grad is activated)
+    "validation_file": "data/dev_with_instructions.csv",
     "evaluation_strategy": "steps",
-    "save_steps": 100,
-    "eval_steps": 1,
-    "logging_steps": 100,
+    "save_steps": 10,
+    "eval_steps": 10,
+    "logging_steps": 10,
     "num_train_epochs": 1.0,
-    "do_predict": true,
-    "predict_with_generate": "true",
-    "test_file": "data/dev__highlights.csv",
+    // "do_predict": true,
+    // "predict_with_generate": "true",
+    // "test_file": "data/short_dev__highlights_for_debugging.csv",
     // Wandb
     "report_to": "none"
     }

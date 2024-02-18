@@ -4,6 +4,10 @@ Repository for our EMNLP 2023 findings paper "[Don’t Add, don’t Miss: Effect
 
 In this repository, we include our 3 techniques to improve the Controlled Text Reduction (CTR) task: {C}ontrolled decoding, {D}istillation from GPT-4 and {R}einforcement Learning (CDR).
 
+## Download Dataset
+To download the original Controlled Text Reduction dataset, follow the instructions in [link](https://github.com/lovodkin93/Controlled_Text_Reduction), and save it under the `data`. \
+For the GPT-4 distilled training data, download it from [GPT4-distilled data](https://drive.google.com/file/d/19j7w0A3XgBBvTsy8RNOevnpAD93yvPK3/view?usp=sharing), unzip it and save it under `data`.
+
 ## Supervised Training Experiments
 To train the Flan-T5 model on the original CTR dataset, run:
 ```
@@ -19,10 +23,6 @@ python -m src.run_experiments configs/train/flan_t5_large/finetune_flan_t5_large
 
 ## Supervised Training Experiments - GPT4-distilled Dataset
 To perform the supervised training experiments with the GPT4-distilled dataset, replace in the previous config paths `flan_t5_large` with `distilled_flan_t5_large` and `LED_large` with `distilled_LED_large`.
-
-## Download Dataset
-To download the original Controlled Text Reduction dataset, follow the instructions in [link](https://github.com/lovodkin93/Controlled_Text_Reduction), and save it under the `data`. \
-For the GPT-4 distilled training data, download it from [GPT4-distilled data](https://drive.google.com/file/d/1fNpuJEOPCKKznUHQud16rAkc7lrh98Ya/view?usp=sharing), unzip it and save it under `data`.
 
 
 

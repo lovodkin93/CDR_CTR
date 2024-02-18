@@ -2,7 +2,8 @@
 
 Repository for our EMNLP 2023 findings paper "[Don’t Add, don’t Miss: Effective Content Preserving Generation from Pre-Selected Text Spans](https://aclanthology.org/2023.findings-emnlp.852/)"
 
-In this repository, we include our 3 techniques to improve the Controlled Text Reduction (CTR) task: {C}ontrolled decoding, {D}istillation from GPT-4 and {R}einforcement Learning (CDR).
+In this repository, we include our 3 techniques to improve the Controlled Text Reduction (CTR) task: \
+{C}ontrolled decoding, {D}istillation from GPT-4 and {R}einforcement Learning (CDR).
 
 ## Download Dataset
 To download the original Controlled Text Reduction dataset, follow the instructions in [link](https://github.com/lovodkin93/Controlled_Text_Reduction), and save it under the `data`. \

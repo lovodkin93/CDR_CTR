@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     # scorer configuration
     parser.add_argument("--scorer", type=str, default="bert_score")
-    parser.add_argument("--scorer_model_type", type=str, default="roberta-large")  # TODO: Try the one recommended by the BERTScore github: microsoft/deberta-xlarge-mnli (will also require changing the layer)
+    parser.add_argument("--scorer_model_type", type=str, default="roberta-large")  
     parser.add_argument("--scorer_num_layers", type=int, default=17)
 
     args = parser.parse_args()
@@ -93,7 +93,6 @@ if __name__ == "__main__":
             quark_args = json.load(f)
             quark_args = argparse.Namespace(**quark_args)
 
-        # TODO: Redundant policy call necessary since it adds tokens to vectorizer
         Policy(model_name=model_name_or_path, temperature=quark_args.temperature, device='cuda', args=quark_args, logger=logger, last_checkpoint=None, accelerator=accelerator)
         policy = Policy(model_name=model_name_or_path, temperature=quark_args.temperature, device='cuda',
                         reward_cond=True, tree_tokens=tree_tokens, args=quark_args, logger=logger, last_checkpoint=None, accelerator=accelerator)
@@ -266,7 +265,6 @@ if __name__ == "__main__":
             extra_args['global_attention_mask'] = inputs["global_attention_mask"].cuda()
 
         if is_quark_model:
-            # TODO: need to somehow combine this with generator.generate which runs lookahead
             rollouts = policy.sample(input_ids=inputs["input_ids"].cuda(),
                                      attention_mask=inputs["attention_mask"].cuda(),
                                      sample=args.do_sample,

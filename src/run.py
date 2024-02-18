@@ -52,8 +52,6 @@ import torch.nn as nn
 # torch.autograd.set_detect_anomaly(True) 
 # torch.backends.cuda.matmul.allow_tf32 = True
 
-
-
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.19.0.dev0")
 
@@ -138,40 +136,30 @@ class ModelArguments:
             "the model's position embeddings."
         },
     )
-    # NEW from original script
     freeze_embeds: bool = field(
         default=False
     )
-    # NEW from original script
     min_length: int = field(
         default=None
     )
-    # NEW from original script
     length_penalty: float = field(
         default=None
     )
-    # NEW from original script
     early_stopping: bool = field(
         default=False
     )
-    # NEW from original script
     no_repeat_ngram_size: int = field(
         default=None
     )
-
-    # NEW from original script (for LongT5)
     local_radius: int = field(
         default=None
     )
-    # NEW from original script (for LongT5)
     global_block_size: int = field(
         default=None
     )
-    # NEW from original script (for LongT5)
     encoder_attention_type: int = field(
         default=None
     )
-    # NEW from original script
     lora_training: bool = field(
         default=False
     )
@@ -187,9 +175,6 @@ class ModelArguments:
     lora_bias: str = field(
         default="all"
     )
-
-
-
 
 @dataclass
 class DataTrainingArguments:
@@ -316,71 +301,54 @@ class DataTrainingArguments:
             "needs to be the target language token (Usually it is the target language token)"
         },
     )
-    # NEW from original script
     add_global_attention: bool = field(
         default=False
     )
-    # NEW from original script
     add_global_attention_on_highlights: bool = field(
         default=False
     )
-    # NEW from original script
     add_global_attention_on_highlighted_words: bool = field(
         default=False,
         metadata={
             "help": "Decides whether to add global attention not only on the highlight_start and highlight_end tokens, but also on the highlighted tokens themselves"
         }
     )
-    # NEW from original script
     should_preprocess_add_highlights: bool = field(
         default=True,
         metadata={
             "help": "Decides whether to add highlight tokens or not"
         }
     )
-    # NEW from original script
     should_preprocess_only_sents_with_highlights: bool = field(
         default=False,
         metadata={
             "help": "Decides whether to keep only sentences with highlights"
         }
     )
-    # NEW from original script
     should_preprocess_keep_only_highlights: bool = field(
         default=False,
         metadata={
             "help": "Decides whether to keep only highlights"
         }
     )
-    
-    # NEW from original script
     eval_with_bertscore: bool = field(
         default=False
     )
-
-
-    # NEW from original script
     add_planning_on_concatenation: bool = field(
         default=False
     )
-    # NEW from original script
     add_highlight_delim_planning: bool = field(
         default=True
     )
-        # NEW from original script
     add_highlight_labels_to_planning: bool = field(
         default=False
     )
-
-        # NEW from original script
     add_CoT_to_output: str = field(
         default=None,
         metadata={
             "help": "whether to add CoT to output. options: None (no CoT), \"highlights\" for highlights enumeration CoT, \"Highlights+Alignment\"  for highlights enumeration+alignment CoT, \"mix-highlights\", \"mix-alignments\", \"mix-all\" for mix of no Cot with highlights/highlights+alignments/all three versions, repectively."
         }
     )
-
-        # NEW from original script
     add_icl_to_input: bool = field(
         default=False
     )
@@ -401,7 +369,6 @@ class DataTrainingArguments:
                     "csv", "json"], "`validation_file` should be a csv or a json file."
         if self.val_max_target_length is None:
             self.val_max_target_length = self.max_target_length
-
 
 summarization_name_mapping = {
     "amazon_reviews_multi": ("review_body", "review_title"),
@@ -472,24 +439,8 @@ def main():
                 f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
                 "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
             )
-
     # Set seed before initializing model.
     set_seed(training_args.seed)
-
-    # # accelerate
-    # accelerator = Accelerator()
-    # if training_args.report_to:
-    #     project_name = os.environ.get("WANDB_PROJECT", "instructions_finetuning_CTR")
-    #     accelerator.init_trackers(project_name, config={}, init_kwargs={training_args.report_to[0]:{"name":f"{training_args.run_name}"}})
-
-    # Get the datasets: you can either provide your own CSV/JSON training and evaluation files (see below)
-    # or just provide the name of one of the public datasets available on the hub at https://huggingface.co/datasets/
-    # (the dataset will be downloaded automatically from the datasets Hub).
-    #
-    # For CSV/JSON files this script will use the first column for the full texts and the second column for the
-    # summaries (unless you specify column names for this with the `text_column` and `summary_column` arguments).
-    #
-    # In distributed training, the load_dataset function guarantee that only one local process can concurrently
     # download the dataset.
     if data_args.dataset_name is not None:
         # Downloading and loading a dataset from the hub.
@@ -519,7 +470,6 @@ def main():
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
     # https://huggingface.co/docs/datasets/loading_datasets.html.
 
-    # NEW from original script (enables sending config from arguments, necessary for LED)
     model_args_dict = {}
     model_args_dict.update(model_args.__dict__)
     model_args_dict['max_length'] = data_args.max_target_length  # We must add max_length when setting min_length
@@ -532,10 +482,7 @@ def main():
     # download model & vocab.
     config = AutoConfig.from_pretrained(
         model_args.config_name if model_args.config_name else model_args.model_name_or_path,
-        # cache_dir=model_args.cache_dir,  # NEW from original script (commented out becauase now is taking care of by **model_args.__dict__)
-        # revision=model_args.model_revision,  # NEW from original script (commented out becauase now is taking care of by **model_args.__dict__)
-        # use_auth_token=True if model_args.use_auth_token else None,  # NEW from original script (commented out becauase now is taking care of by **model_args.__dict__)
-        **model_args_dict # NEW from original script (enables sending config)
+        **model_args_dict 
     )
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
@@ -550,9 +497,6 @@ def main():
             task_type=TaskType.SEQ_2_SEQ_LM, inference_mode=False, r=model_args.lora_r, lora_alpha=model_args.lora_alpha, lora_dropout=model_args.lora_dropout, bias=model_args.lora_bias
         )
 
-
-
-
     model = AutoModelForSeq2SeqLM.from_pretrained(
         model_args.model_name_or_path,
         from_tf=bool(".ckpt" in model_args.model_name_or_path),
@@ -564,26 +508,10 @@ def main():
         load_in_8bit=model_args.load_in_8bit
     )
 
-    # # cast all small layer to FT32 for stability.
-    # for param in model.parameters():
-    #     param.requires_grad = False  # freeze the model - train adapters later
-    #     if param.ndim == 1:
-    #         # cast the small parameters (e.g. layernorm) to fp32 for stability
-    #         param.data = param.data.to(torch.float32)
-
-    # model.gradient_checkpointing_enable()  # reduce number of stored activations
-    # model.enable_input_require_grads()
-
-    # class CastOutputToFloat(nn.Sequential):
-    #     def forward(self, x): return super().forward(x).to(torch.float32)
-    # model.lm_head = CastOutputToFloat(model.lm_head)
-
-
     if model_args.lora_training:
         model = get_peft_model(model, peft_config)
         model.print_trainable_parameters()  
 
-    # NEW from original script
     is_t5_model = model_args.model_name_or_path in [
         "t5-small",
         "t5-base",
@@ -597,19 +525,12 @@ def main():
             "`--source_prefix 'summarize: ' `"
         )
 
-    # NEW from original script
     prefix = data_args.source_prefix if data_args.source_prefix is not None else ""
-
-    # NEW from original script
     special_tokens_constants = get_special_tokens_constants(is_t5_model)
     preprocessor = Preprocessor(prefix, special_tokens_constants, data_args.should_preprocess_add_highlights, data_args.should_preprocess_only_sents_with_highlights, data_args.should_preprocess_keep_only_highlights, data_args.add_planning_on_concatenation, data_args.add_highlight_delim_planning, data_args.add_highlight_labels_to_planning, data_args.add_CoT_to_output)
-
-    # NEW from original script
     tokenizer.add_special_tokens({'additional_special_tokens': list(special_tokens_constants.values())})
-
     model.resize_token_embeddings(len(tokenizer))
 
-    # NEW from original script
     if model_args.freeze_embeds:
         freeze_embeds(model)
 
@@ -701,7 +622,6 @@ def main():
             f"`{model.__class__.__name__}`. This will lead to loss being calculated twice and will take up more memory"
         )
 
-    # NEW from original script
     def preprocess_function(examples):
         # Orig summarization dataset
         if data_args.dataset_name is not None:
@@ -718,7 +638,6 @@ def main():
         else:
             inputs, targets = [], []
             for i in range(len(examples[text_column])):
-                # NEW from original script
                 curr_instructions = examples["instructions"][i] if "instructions" in examples.data.keys() else None
                 curr_input = preprocessor.preprocess_input(examples['doc_text'][i], examples['highlight_spans'][i], curr_instructions)
                 inputs.append(curr_input)
@@ -742,7 +661,6 @@ def main():
 
         model_inputs["labels"] = labels["input_ids"]
 
-        # NEW from original script
         global_attention_mask = []
         if data_args.add_global_attention:
             for input_ids in tqdm(model_inputs['input_ids']):
@@ -761,7 +679,7 @@ def main():
                     highlight_began_flag = False
                     for input_id_idx, input_id in enumerate(input_ids):
                         # Put attention on highlight tokens
-                        if input_id in ids_with_global_attention: #AVIVSL: play with this (regarding the other special tokens)
+                        if input_id in ids_with_global_attention: 
                             curr_global_attention_mask[input_id_idx] = 1
                         if data_args.add_global_attention_on_highlighted_words:
                             if input_id == highlight_start_tkn_id:
@@ -845,9 +763,8 @@ def main():
     )
 
     # Metric
-    metric = evaluate.load("rouge") # load_metric("rouge") # AVIVSL: updated this
+    metric = evaluate.load("rouge")
     meteor_metric = evaluate.load('meteor')
-
 
     def postprocess_text(preds, labels, is_add_planning_on_concatenation, preprocessor, tokenizer):
         all_special_tkns = sum([special_tkns if type(special_tkns)==list else [special_tkns] for special_tkns in tokenizer.special_tokens_map.values()], [])
@@ -874,10 +791,6 @@ def main():
         preds, labels = eval_preds
         if isinstance(preds, tuple):
             preds = preds[0]
-        
-        # if is_add_planning_on_concatenation:
-            # start_summary_tkn_id = [tkn_id for tkn_id in tokenizer.additional_special_tokens_ids if tokenizer.decode([tkn_id]) == preprocessor.special_tokens_constants["is_summary"]][0]
-
 
         decoded_preds = tokenizer.batch_decode(preds)
         if data_args.ignore_pad_token_for_loss:
@@ -890,7 +803,6 @@ def main():
         decoded_preds, decoded_labels = postprocess_text(
             decoded_preds, decoded_labels, is_add_planning_on_concatenation, preprocessor, tokenizer)
 
-        # NEW from original script
         if data_args.add_CoT_to_output is None: 
             result = compute_rouge_metrics(decoded_preds, decoded_labels, metric, prefix="gold")
             result.update(compute_rouge_metrics(decoded_preds, decoded_labels, metric, prefix="gold_content_", should_filter_function_words=True))
@@ -911,8 +823,6 @@ def main():
 
         if not is_training:
             df = pd.DataFrame(predict_dataset.to_dict())
-            if not data_args.add_CoT_to_output is None:
-                raise Exception("AVIVSL: need to add support for the \"add_CoT_to_output\", by removing from the output the instructions, so they are no incorporated into the concatenated highlights.")
             highlights = concatenate_highlights(df)
             result.update(compute_rouge_metrics(decoded_preds, highlights, metric, prefix="highlights"))
             result.update(compute_rouge_metrics(decoded_preds, highlights, metric, prefix="highlights_content", should_filter_function_words=True))
@@ -927,12 +837,8 @@ def main():
 
         return result
 
-    # NEW from original script (if training compute only necessary metrics, otherwise compute more)
     compute_metrics_for_train = lambda *args, **kwargs: compute_metrics(*args, **kwargs, is_training=True, is_add_planning_on_concatenation=data_args.add_planning_on_concatenation, preprocessor=preprocessor)
     compute_metrics_for_eval = lambda *args, **kwargs: compute_metrics(*args, **kwargs, is_training=False, is_add_planning_on_concatenation=data_args.add_planning_on_concatenation, preprocessor=preprocessor)
-
-    # accelerate model
-    # model, tokenizer = accelerator.prepare(model, tokenizer)
 
     # Initialize our Trainer
     trainer = Seq2SeqTrainer(
@@ -944,10 +850,8 @@ def main():
         data_collator=data_collator,
         compute_metrics=compute_metrics_for_train if training_args.predict_with_generate else None,
     )
-    # trainer = accelerator.prepare(trainer)
 
 
-    # NEW from original script (if received config file, save it with the model)
     if (len(sys.argv) == 3 or len(sys.argv) == 2) and sys.argv[-1].endswith(".json") and (training_args.do_predict or torch.distributed.get_rank()==0):
         config_file_path = sys.argv[-1]
         with open(config_file_path, "r") as f:
@@ -1031,15 +935,11 @@ def main():
         if trainer.is_world_process_zero():
             if training_args.predict_with_generate:
                 logger.info("Start analyzing predictions")
-
-                # NEW from original script (aggregate elaborated predictions)
                 result = compute_metrics_for_eval((predict_results.predictions, predict_results.label_ids))
                 eval_output_prediction_file = os.path.join(training_args.output_dir, "elaborated_predictions.json")
                 with open(eval_output_prediction_file, "w") as f:
                     f.write(json.dumps(result))
                 print(result)
-
-                # NEW from original script (per sample prediction)
                 PredictionsAnalyzer(tokenizer, preprocessor, data_args.add_planning_on_concatenation, training_args.output_dir, metric).write_predictions_to_file(predict_results.predictions, prep_predict_dataset, pd.DataFrame(predict_dataset.to_dict()))
 
     kwargs = {"finetuned_from": model_args.model_name_or_path,
@@ -1061,12 +961,6 @@ def main():
         trainer.create_model_card(**kwargs)
 
     return results
-
-
-def _mp_fn(index):
-    # For xla_spawn (TPUs)
-    main()
-
 
 if __name__ == "__main__":
     main()

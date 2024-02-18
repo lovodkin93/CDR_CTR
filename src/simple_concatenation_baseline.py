@@ -6,12 +6,9 @@ import logging
 from datasets import load_metric
 
 import pandas as pd
-from src.compute_metrics import compute_rouge_metrics, compute_summac_metrics
+from src.compute_metrics import compute_rouge_metrics
 from src.concatenate_highlights import concatenate_highlights
 from src.predictions_analyzer import PredictionsAnalyzer
-
-from src.utils import get_summac_model
-
 
 
 def main(config: dict, summaries_to_test_key: str):
@@ -39,16 +36,8 @@ def main(config: dict, summaries_to_test_key: str):
     # Calc rouge
     metric = load_metric("rouge")
     result = compute_rouge_metrics(summaries_to_test, summaries, metric, prefix="gold")
-    # result.update(compute_rouge_metrics(summaries_to_test, summaries, metric, prefix="gold_content_", should_filter_function_words=True))
-
-    # Calc Summac
-    summac_model = None
-    if config.get('eval_with_summac', True):
-        summac_model = get_summac_model()
-        result.update(compute_summac_metrics(inputs, summaries_to_test, summac_model))
-
     logging.info(result)
     logging.info("Analyzing predictions...")
 
     # Extract predictions file
-    PredictionsAnalyzer(None, None, False, config['output_dir'], summac_model, metric).write_predictions_to_file(summaries_to_test, inputs, df, is_tokenized=False)
+    PredictionsAnalyzer(None, None, False, config['output_dir'], metric).write_predictions_to_file(summaries_to_test, inputs, df, is_tokenized=False)

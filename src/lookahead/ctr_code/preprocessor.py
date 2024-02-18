@@ -103,11 +103,9 @@ class Preprocessor:
         return gold_output
     
 
-    # NEW from original script
     def preprocess_function(self, examples, tokenizer, max_source_length, max_target_length, padding="max_length", ignore_pad_token_for_loss=True, add_global_attention=False, add_global_attention_on_highlights=False, add_global_attention_on_highlighted_words=False, override_inputs=None):
         inputs, targets = [], []
         for i in range(len(examples['doc_text'])):
-            # NEW from original script
             curr_input = self.preprocess_input(examples['doc_text'][i], examples['highlight_spans'][i])
             inputs.append(curr_input)
             curr_output = self.preprocess_output(examples['summary_text'][i], curr_input)
@@ -132,8 +130,6 @@ class Preprocessor:
             ]
 
         model_inputs["labels"] = labels["input_ids"]
-
-        # NEW from original script
         global_attention_mask = []
         if add_global_attention:
             for input_ids in tqdm(model_inputs['input_ids']):
@@ -152,7 +148,7 @@ class Preprocessor:
                     highlight_began_flag = False
                     for input_id_idx, input_id in enumerate(input_ids):
                         # Put attention on highlight tokens
-                        if input_id in ids_with_global_attention: #AVIVSL: play with this (regarding the other special tokens)
+                        if input_id in ids_with_global_attention:
                             curr_global_attention_mask[input_id_idx] = 1
                         if add_global_attention_on_highlighted_words:
                             if input_id == highlight_start_tkn_id:

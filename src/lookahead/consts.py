@@ -11,5 +11,5 @@ model_name_to_path = {
     "led_quark_init": "models/led/init_models/finetune_led_large_on_pretrain_cnndm_duc/checkpoint-300",
     "led_distilled_quark": "models/led/LED_large_distilled_batch2_max_src_len_1400_P_reward_type_highlights_precision_rougeL_R_reward_type_highlights_recall_rougeL/ckp_15000",
     "led_distilled_quark_init": "models/led/init_models/finetune_led_large_on_pretrain_cnndm_duc_distilled/checkpoint-1600",
-    "distilled": "models/flan-t5-large/flan_t5_large_on_distilled_GPT4_max_target_length_512/checkpoint-1400", # TODO: Check which one is this if we want to use these results
+    "distilled": "models/flan-t5-large/flan_t5_large_on_distilled_GPT4_max_target_length_512/checkpoint-1400",
 }

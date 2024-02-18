@@ -234,20 +234,6 @@ class Policy:
             output_hidden_states=False,
         )        
 
-        ############################ debugging ##############################
-        # curr_model = self.accelerator.unwrap_model(self.model) if type(self.model) == DistributedDataParallel else self.model
-        # outputs1 = curr_model.generate(
-        #             input_ids=model_inputs["input_ids"][:,0].unsqueeze(0),
-        #             return_dict_in_generate=True,
-        #             output_attentions=False,
-        #             output_hidden_states=False,
-        #             output_scores=True
-        #     )
-        # generated_str = self.tokenizer.batch_decode(outputs1.sequences)
-        # print("AVIVSL:")
-        # print(generated_str)
-        #####################################################################
-
         logits = outputs.logits
         if logits.isnan().any():
             self.logger.warning(f"Received logits that are NaN")

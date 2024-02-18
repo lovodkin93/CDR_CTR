@@ -3,7 +3,7 @@
     "experiment_type": "seq2seq",
     "model_name_or_path": "models/T0_3B/T0_3B_no_CoT_no_icl/checkpoint-300",
     "output_dir": "models/T0_3B/T0_3B_no_CoT_no_icl",
-    "source_prefix": "In this task, you are presented with a passage, where some parts are \"highlighted\" (namely, there are <highlight_start> and <highlight_end> tokens before and after each such span). \nYour job is to generate a summary that covers all and only the \"highlighted\" spans. \nPassage: ",
+    "source_prefix": "Instruction: In this task, you are presented with a passage, where some parts are \"highlighted\" (namely, there are <highlight_start> and <highlight_end> tokens before and after each such span). \nYour job is to generate a summary that covers all and only the \"highlighted\" spans. \nPassage: ",
     "max_source_length": 4096,
     "max_target_length": 512,
     // "add_global_attention": true,

@@ -31,3 +31,29 @@ To perform the supervised training experiments with the GPT4-distilled dataset, 
 ## Best Model Weights
 You can download the weights of the best variant in:
 [best model weights](https://drive.google.com/drive/folders/11k_BTiXD6ItjEhN4wp267HRjg1euttL7?usp=sharing)
+
+# Citation 
+
+If you use this in your work, please cite:
+
+```
+@inproceedings{slobodkin-etal-2023-dont,
+    title = "Don{'}t Add, don{'}t Miss: Effective Content Preserving Generation from Pre-Selected Text Spans",
+    author = "Slobodkin, Aviv  and
+      Caciularu, Avi  and
+      Hirsch, Eran  and
+      Dagan, Ido",
+    editor = "Bouamor, Houda  and
+      Pino, Juan  and
+      Bali, Kalika",
+    booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2023",
+    month = dec,
+    year = "2023",
+    address = "Singapore",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2023.findings-emnlp.852",
+    doi = "10.18653/v1/2023.findings-emnlp.852",
+    pages = "12784--12800",
+    abstract = "The recently introduced Controlled Text Reduction (CTR) task isolates the text generation step within typical summarization-style tasks. It does so by challenging models to generate coherent text conforming to pre-selected content within the input text ({``}highlights{''}). This framing enables increased modularity in summarization-like tasks, allowing to couple a single CTR model with various content-selection setups and modules. However, there are currently no reliable CTR models, while the performance of the existing baseline for the task is mediocre, falling short of practical utility. Here, we address this gap by introducing a high-quality, open-source CTR model that tackles two prior key limitations: inadequate enforcement of the content-preservation constraint, and suboptimal silver training data. Addressing these, we amplify the content-preservation constraint in both training, via RL, and inference, via a controlled decoding strategy. Further, we substantially improve the silver training data quality via GPT-4 distillation. Overall, pairing the distilled dataset with the highlight-adherence strategies yields marked gains over the current baseline, of up to 30 ROUGE-L points, providing a reliable CTR model for downstream use.",
+}
+```
